@@ -176,19 +176,26 @@ router.patch('/:id', async (req, res) => {
     category, payee, supplier_id, payment_method, expense_date,
     amount, tax_rate, reference, notes, status,
   } = req.body;
+
+  const client = await pool.connect();
   try {
-    // Recompute totals when amount or tax rate change
+    await client.query('BEGIN');
+    const cur = await client.query(
+      'SELECT * FROM expenses WHERE expense_id=$1', [req.params.id]);
+    if (!cur.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Not found.' });
+    }
+
     let amountVal = null, taxVal = null, totalVal = null;
     if (amount !== undefined) {
-      const sub = parseFloat(amount) || 0;
-      const rate = tax_rate !== undefined
-        ? parseFloat(tax_rate) / 100
-        : null;
-      amountVal = sub;
+      const sub  = parseFloat(amount) || 0;
+      const rate = tax_rate !== undefined ? parseFloat(tax_rate) / 100 : null;
+      amountVal  = sub;
       if (rate !== null) { taxVal = sub * rate; totalVal = sub + taxVal; }
     }
 
-    const r = await pool.query(`
+    const r = await client.query(`
       UPDATE expenses SET
         category       = COALESCE($1, category),
         payee          = COALESCE($2, payee),
@@ -208,20 +215,46 @@ router.patch('/:id', async (req, res) => {
        amountVal, taxVal, totalVal,
        reference ?? null, notes ?? null, status ?? null,
        req.params.id]);
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found.' });
-    res.json({ expense: r.rows[0] });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+
+    const updated = r.rows[0];
+    await gl.reverseEntries(client, 'expense', Number(req.params.id));
+    await gl.postEntry(client, {
+      date: updated.expense_date,
+      memo: `Expense ${updated.expense_number} — ${updated.category}`,
+      sourceType: 'expense', sourceId: updated.expense_id, createdBy: req.user.userId,
+      lines: [
+        { expenseCategory: updated.category, debit: parseFloat(updated.total_amount), description: updated.payee || updated.category },
+        { systemKey: gl.paymentAccountKey(updated.payment_method), credit: parseFloat(updated.total_amount), description: 'Paid' },
+      ],
+    });
+
+    await client.query('COMMIT');
+    res.json({ expense: updated });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: err.message });
+  } finally { client.release(); }
 });
 
 // ── DELETE /api/expenses/:id ────────────────────────────────────────────────
 router.delete('/:id', async (req, res) => {
+  const client = await pool.connect();
   try {
-    const r = await pool.query(
-      `DELETE FROM expenses WHERE expense_id=$1 RETURNING expense_id`,
-      [req.params.id]);
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found.' });
+    await client.query('BEGIN');
+    const check = await client.query(
+      'SELECT expense_id FROM expenses WHERE expense_id=$1', [req.params.id]);
+    if (!check.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Not found.' });
+    }
+    await gl.reverseEntries(client, 'expense', Number(req.params.id));
+    await client.query('DELETE FROM expenses WHERE expense_id=$1', [req.params.id]);
+    await client.query('COMMIT');
     res.json({ success: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: err.message });
+  } finally { client.release(); }
 });
 
 module.exports = router;

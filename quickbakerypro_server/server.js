@@ -20,6 +20,7 @@ const staffRoutes          = require('./routes/staff');
 const invoicesRoutes       = require('./routes/invoices');
 const billsRoutes          = require('./routes/bills');
 const expensesRoutes       = require('./routes/expenses');
+const accountsRoutes       = require('./routes/accounts');
 
 const app = express();
 
@@ -65,6 +66,7 @@ app.use('/api/staff',           staffRoutes);
 app.use('/api/invoices',        invoicesRoutes);
 app.use('/api/bills',           billsRoutes);
 app.use('/api/expenses',        expensesRoutes);
+app.use('/api/accounts',        accountsRoutes);
 
 app.get('/', (req, res) => res.json({ status: 'QuickBakeryPro API running' }));
 
