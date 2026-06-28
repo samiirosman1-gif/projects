@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(node \"C:/Users/Me/AppData/Local/Temp/claude/C--Users-Me-Documents-Projects/63df3bd6-c0ae-4e37-a45b-1dcd9aec0d98/scratchpad/create_expenses.js\")",
+      "Bash(flutter analyze *)",
+      "Bash(grep -vi \"file_picker\\\\|references\\\\|Ask the maintainers\\\\|^$\")",
+      "Bash(node -e \"require\\('./routes/expenses'\\); require\\('./server.js'\\) ? 0 : 0\")",
+      "Bash(node --check routes/expenses.js)",
+      "Bash(node --check server.js)",
+      "Bash(node \"C:/Users/Me/AppData/Local/Temp/claude/C--Users-Me-Documents-Projects/63df3bd6-c0ae-4e37-a45b-1dcd9aec0d98/scratchpad/test_expenses.js\")",
+      "Bash(node -e \"const p=require\\('./db'\\);\\(async\\(\\)=>{const c=await p.query\\('SELECT COUNT\\(*\\)::int n FROM expenses'\\);await p.query\\('SELECT setval\\(\\\\$1,1,false\\)',['expense_number_seq']\\);console.log\\('rows in expenses:',c.rows[0].n,'| sequence reset to start at EXP-0001'\\);process.exit\\(0\\)}\\)\\(\\)\")",
+      "Bash(curl -s -m 3 http://localhost:4000/)",
+      "Bash(curl -s -m 3 http://localhost:4000/api/expenses)",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const p=JSON.parse\\(d\\);console.log\\('scripts:',JSON.stringify\\(p.scripts,null,2\\)\\);console.log\\('devDeps:',Object.keys\\(p.devDependencies||{}\\).join\\(', '\\)\\)}\\)\")",
+      "Bash(node \"C:/Users/Me/AppData/Local/Temp/claude/C--Users-Me-Documents-Projects/63df3bd6-c0ae-4e37-a45b-1dcd9aec0d98/scratchpad/gl_schema.js\")",
+      "Bash(node --check gl.js)"
+    ]
+  }
+}
